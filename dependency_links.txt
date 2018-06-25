@@ -1,0 +1,1 @@
+git+ssh://git@gitlab.office.nic.cz/fred/utils/pyfco.git#egg=fred-pyfco-0
