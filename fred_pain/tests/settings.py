@@ -7,7 +7,7 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'djmoney',
     'django_pain.apps.DjangoPainConfig',
-    'fred_pain.settings.FredPainConfig',
+    'fred_pain.apps.FredPainConfig',
 ]
 
 PAIN_PROCESSORS = []  # type: list
