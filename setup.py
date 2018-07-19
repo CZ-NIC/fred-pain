@@ -13,8 +13,9 @@ def readme():
         return f.read()
 
 
-INSTALL_REQUIRES = ['django-pain']
-EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy']}
+INSTALL_REQUIRES = open('requirements.txt').read().splitlines()
+EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy'],
+                  'test': ['Django>=1.11', 'django-money']}
 
 setup(name='fred-pain',
       version=fred_pain.__version__,
@@ -26,6 +27,7 @@ setup(name='fred-pain',
       packages=find_packages(),
       install_requires=INSTALL_REQUIRES,
       extras_require=EXTRAS_REQUIRE,
+      python_requires='>=3.5',
       classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Plugins',
@@ -35,4 +37,5 @@ setup(name='fred-pain',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
-      ])
+      ],
+      dependency_links=open('dependency_links.txt').read().splitlines())

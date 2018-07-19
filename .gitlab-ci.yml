@@ -1,0 +1,51 @@
+variables:
+    IDL_DIR: "idl"
+
+########################################################################################################################
+# Basic declarations
+.requires-python: &requires-python
+    tags:
+        - python
+
+.python3-xenial: &python3-xenial
+    image: cznic/ubuntu_xenial_python3:latest
+
+.install-dependencies: &install-dependencies
+    before_script:
+        - pip3 list
+        # Install package dependencies
+        - apt-get update && apt-get install -y omniidl-python
+        # Get pr-version and update dependency links
+        - git clone git@gitlab.office.nic.cz:pr-utils/pr-version.git --depth 1
+        - pervert-requirements.py -r dependency_links.txt
+        - cat dependency_links.txt
+        # Parse IDL requirements
+        - if [ -e pr-version/devel/$CI_BUILD_REF_NAME.conf ]; then IDL_BRANCH=$(python -c "import json;obj=json.loads(open('pr-version/devel/${CI_BUILD_REF_NAME}.conf').read());print obj.get('idl',{}).get('revision', 'master')"); fi
+        - git clone git@gitlab.office.nic.cz:fred/idl.git
+        - (cd idl && git checkout $IDL_BRANCH && omniidl -bpython -Wbmodules=fred_idl -Wbstubs=fred_idl._stubs idl/*.idl)
+        - pip3 install tox
+        - pip3 install git+https://github.com/balabit/tox-debian-plugin.git
+
+.test: &test
+    <<: *requires-python
+    <<: *python3-xenial
+    <<: *install-dependencies
+    script:
+        - tox
+
+########################################################################################################################
+# Individual jobs
+depcheck:
+    <<: *requires-python
+    <<: *python3-xenial
+    only:
+        - schedules
+    before_script:
+        # Install package with testing dependencies to verify versions
+        - pip3 install --process-dependency-links .[testing]
+    script:
+        - check-constraints.py constraints.txt
+    allow_failure: true
+
+test:
+    <<: *test
