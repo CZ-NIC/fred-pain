@@ -5,7 +5,7 @@ from unittest.mock import sentinel
 from django.test import SimpleTestCase
 from django_pain.models import BankAccount, BankPayment
 from djmoney.money import Money
-from fred_idl.Registry import Accounting
+from fred_idl.Registry import Accounting, IsoDate
 
 from fred_pain.corba import AccountingCorbaRecoder
 
@@ -34,7 +34,9 @@ class TestFredPainCorbaRecoder(SimpleTestCase):
         struct = recoder._encode_bankpayment(payment)
 
         self.assertIsInstance(struct, Accounting.PaymentData)
-        self.assertEqual(struct.price, '999.00')
-        self.assertEqual(struct.date, '2018-02-01')
+        self.assertIsInstance(struct.price, Accounting.Money)
+        self.assertEqual(struct.price.value, '999.00')
+        self.assertIsInstance(struct.date, IsoDate)
+        self.assertEqual(struct.date.value, '2018-02-01')
         for _, key, val in values:
             self.assertEqual(getattr(struct, key), val)

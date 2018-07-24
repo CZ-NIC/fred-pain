@@ -14,7 +14,7 @@ def readme():
 
 
 INSTALL_REQUIRES = open('requirements.txt').read().splitlines()
-EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy'],
+EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint'],
                   'test': ['Django>=1.11', 'django-money']}
 
 setup(name='fred-pain',
