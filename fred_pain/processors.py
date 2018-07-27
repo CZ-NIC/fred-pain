@@ -37,7 +37,7 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
                 ACCOUNTING.increase_zone_credit_of_registrar(payment.uuid, registrar.handle, zone, credit.value)
 
         except (Accounting.INTERNAL_SERVER_ERROR, Accounting.REGISTRAR_NOT_FOUND, Accounting.INVALID_ZONE,
-                Accounting.INVALID_CREDIT_VALUE):
+                Accounting.INVALID_CREDIT_VALUE, Accounting.INVALID_PAYMENT_DATA):
             return ProcessPaymentResult(result=False, objective=self.default_objective)
         except Accounting.CREDIT_ALREADY_PROCESSED:
             # This can happen if connection error occurs after increasing credit in backend.
