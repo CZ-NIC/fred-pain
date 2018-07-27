@@ -33,6 +33,8 @@ def get_registrar(**kwargs):
         'handle': 'REG-BBT',
         'name': 'Sheldon Cooper',
         'organization': 'Caltech',
+        'cin': '',
+        'tin': '',
         'url': 'http://sheldon.example.com',
         'phone': None,
         'fax': None,
