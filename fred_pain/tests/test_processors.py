@@ -115,7 +115,7 @@ class TestFredPaymentProcessor(CorbaAssertMixin, SimpleTestCase):
     def test_assign_payment(self, corba_mock):
         """Test assign_payment method."""
         ACCOUNTING.get_registrar_by_handle_and_payment.return_value = (get_registrar(handle='REG-BBT'), 'CZ')
-        ACCOUNTING.import_payment.return_value = Accounting.Credit(value='42')
+        ACCOUNTING.import_payment_by_registrar_handle.return_value = Accounting.Credit(value='42')
 
         self.assertEqual(
             self.processor.assign_payment(self.payment, 'REG-BBT'),
@@ -123,6 +123,6 @@ class TestFredPaymentProcessor(CorbaAssertMixin, SimpleTestCase):
         )
         self.assertCorbaCallsEqual(corba_mock.mock_calls, [
             call.get_registrar_by_handle_and_payment('REG-BBT', self.payment),
-            call.import_payment(self.payment),
+            call.import_payment_by_registrar_handle(self.payment, 'REG-BBT'),
             call.increase_zone_credit_of_registrar('UUID', 'REG-BBT', 'CZ', '42')
         ])

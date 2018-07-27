@@ -29,10 +29,11 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
         try:
             if client_id is None:
                 registrar, zone = ACCOUNTING.get_registrar_by_payment(payment)
+                credit = ACCOUNTING.import_payment(payment)
             else:
                 registrar, zone = ACCOUNTING.get_registrar_by_handle_and_payment(client_id, payment)
+                credit = ACCOUNTING.import_payment_by_registrar_handle(payment, registrar.handle)
 
-            credit = ACCOUNTING.import_payment(payment)
             if Decimal(credit.value) > 0:
                 ACCOUNTING.increase_zone_credit_of_registrar(payment.uuid, registrar.handle, zone, credit.value)
 
