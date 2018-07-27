@@ -1,9 +1,9 @@
 """FRED CORBA interface."""
 from django.utils.functional import SimpleLazyObject
 from django_pain.models import BankPayment
-from fred_idl.Registry import Accounting, IsoDate
+from fred_idl.Registry import Accounting, IsoDate, IsoDateTime
 from pyfco import CorbaClient, CorbaClientProxy, CorbaNameServiceClient, CorbaRecoder
-from pyfco.recoder import decode_iso_date, encode_iso_date
+from pyfco.recoder import decode_iso_date, decode_iso_datetime, encode_iso_date, encode_iso_datetime
 
 from fred_pain.settings import SETTINGS
 
@@ -17,6 +17,7 @@ class AccountingCorbaRecoder(CorbaRecoder):
         self.add_recode_function(BankPayment, self._identity, self._encode_bankpayment)
 
         self.add_recode_function(IsoDate, decode_iso_date, self._identity)
+        self.add_recode_function(IsoDateTime, decode_iso_datetime, self._identity)
         self.add_recode_function(Accounting.Money, self._identity, self._identity)
         self.add_recode_function(Accounting.Credit, self._identity, self._identity)
 
@@ -34,7 +35,7 @@ class AccountingCorbaRecoder(CorbaRecoder):
             price=Accounting.Money(value=str(payment.amount.amount)),
             date=encode_iso_date(payment.transaction_date),
             memo=payment.description,
-            creation_time=payment.create_time,
+            creation_time=encode_iso_datetime(payment.create_time),
         )
 
 
