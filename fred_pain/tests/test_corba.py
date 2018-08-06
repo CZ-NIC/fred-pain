@@ -17,7 +17,7 @@ class TestFredPainCorbaRecoder(SimpleTestCase):
     def test_encode_bankpayment(self):
         """Test encoding of BankPayment."""
         values = [
-            ('identifier', 'bank_payment_ident', sentinel.identifier),
+            ('identifier', 'account_payment_ident', sentinel.identifier),
             ('uuid', 'uuid', sentinel.uuid),
             ('counter_account_number', 'counter_account_number', sentinel.counter_account_number),
             ('counter_account_name', 'counter_account_name', sentinel.counter_account_name),
