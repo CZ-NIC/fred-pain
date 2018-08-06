@@ -1,5 +1,4 @@
 """FRED payment processors."""
-from decimal import Decimal
 from typing import Iterable, Optional
 
 from django.utils.translation import gettext_lazy as _
@@ -29,16 +28,12 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
         try:
             if client_id is None:
                 registrar, zone = ACCOUNTING.get_registrar_by_payment(payment)
-                credit = ACCOUNTING.import_payment(payment)
+                ACCOUNTING.import_payment(payment)
             else:
                 registrar, zone = ACCOUNTING.get_registrar_by_handle_and_payment(client_id, payment)
-                credit = ACCOUNTING.import_payment_by_registrar_handle(payment, registrar.handle)
+                ACCOUNTING.import_payment_by_registrar_handle(payment, registrar.handle)
 
-            if Decimal(credit.value) > 0:
-                ACCOUNTING.increase_zone_credit_of_registrar(payment.uuid, registrar.handle, zone, credit.value)
-
-        except (Accounting.INTERNAL_SERVER_ERROR, Accounting.REGISTRAR_NOT_FOUND, Accounting.INVALID_ZONE,
-                Accounting.INVALID_CREDIT_VALUE, Accounting.INVALID_PAYMENT_DATA):
+        except (Accounting.INTERNAL_SERVER_ERROR, Accounting.REGISTRAR_NOT_FOUND, Accounting.INVALID_PAYMENT_DATA):
             return ProcessPaymentResult(result=False, objective=self.default_objective)
         except Accounting.CREDIT_ALREADY_PROCESSED:
             # This can happen if connection error occurs after increasing credit in backend.
@@ -47,3 +42,27 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
             return ProcessPaymentResult(result=True, objective=self.default_objective)
         else:
             return ProcessPaymentResult(result=True, objective=self.default_objective)
+
+        # Commented out -- credit balance is for now processed in import_payment.
+        #
+        # try:
+        #     if client_id is None:
+        #         registrar, zone = ACCOUNTING.get_registrar_by_payment(payment)
+        #         credit = ACCOUNTING.import_payment(payment)
+        #     else:
+        #         registrar, zone = ACCOUNTING.get_registrar_by_handle_and_payment(client_id, payment)
+        #         credit = ACCOUNTING.import_payment_by_registrar_handle(payment, registrar.handle)
+        #
+        #     if Decimal(credit.value) > 0:
+        #         ACCOUNTING.increase_zone_credit_of_registrar(payment.uuid, registrar.handle, zone, credit.value)
+        #
+        # except (Accounting.INTERNAL_SERVER_ERROR, Accounting.REGISTRAR_NOT_FOUND, Accounting.INVALID_ZONE,
+        #         Accounting.INVALID_CREDIT_VALUE, Accounting.INVALID_PAYMENT_DATA):
+        #     return ProcessPaymentResult(result=False, objective=self.default_objective)
+        # except Accounting.CREDIT_ALREADY_PROCESSED:
+        #     # This can happen if connection error occurs after increasing credit in backend.
+        #     # When we try to send the payment again, in another processing, backend recognizes
+        #     # payment uuid and throws this exception.
+        #     return ProcessPaymentResult(result=True, objective=self.default_objective)
+        # else:
+        #     return ProcessPaymentResult(result=True, objective=self.default_objective)
