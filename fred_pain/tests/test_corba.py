@@ -1,4 +1,5 @@
 """Test fred_pain corba interface."""
+import uuid
 from datetime import date, datetime
 from unittest.mock import sentinel
 
@@ -18,7 +19,6 @@ class TestFredPainCorbaRecoder(SimpleTestCase):
         """Test encoding of BankPayment."""
         values = [
             ('identifier', 'account_payment_ident', sentinel.identifier),
-            ('uuid', 'uuid', sentinel.uuid),
             ('counter_account_number', 'counter_account_number', sentinel.counter_account_number),
             ('counter_account_name', 'counter_account_name', sentinel.counter_account_name),
             ('constant_symbol', 'constant_symbol', sentinel.constant_symbol),
@@ -30,6 +30,7 @@ class TestFredPainCorbaRecoder(SimpleTestCase):
         account = BankAccount(account_number='123', currency='USD')
         payment = BankPayment(account=account, amount=Money('999.00', 'USD'), transaction_date=date(2018, 2, 1),
                               create_time=datetime(2018, 2, 1, 15, 0, 0, tzinfo=utc),
+                              uuid=uuid.UUID('6dfcab4c-fe4d-4b85-a659-6000d38d0672'),
                               **dict((val[0], val[2]) for val in values))
 
         recoder = AccountingCorbaRecoder()
@@ -42,5 +43,6 @@ class TestFredPainCorbaRecoder(SimpleTestCase):
         self.assertEqual(struct.date.value, '2018-02-01')
         self.assertIsInstance(struct.creation_time, IsoDateTime)
         self.assertEqual(struct.creation_time.value, '2018-02-01T15:00:00+00:00')
+        self.assertEqual(struct.uuid, '6dfcab4cfe4d4b85a6596000d38d0672')
         for _, key, val in values:
             self.assertEqual(getattr(struct, key), val)
