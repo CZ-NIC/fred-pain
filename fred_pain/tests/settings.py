@@ -10,4 +10,10 @@ INSTALLED_APPS = [
     'fred_pain.apps.FredPainConfig',
 ]
 
+DATABASES = {
+    'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}
+}
+
 PAIN_PROCESSORS = []  # type: list
+
+FRED_PAIN_DAPHNE_URL = ''
