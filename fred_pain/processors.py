@@ -43,3 +43,14 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
         else:
             return ProcessPaymentResult(result=True, objective=self.default_objective)
 
+    @staticmethod
+    def get_client_choices() -> dict:
+        """
+        Get registrar handles and names.
+
+        Registrar handle is appended to registrar name.
+        """
+        registrars = {}
+        for reg in ACCOUNTING.get_registrar_references():
+            registrars[reg.handle] = '%s (%s)' % (reg.name, reg.handle)
+        return registrars

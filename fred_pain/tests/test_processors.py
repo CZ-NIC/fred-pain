@@ -109,3 +109,14 @@ class TestFredPaymentProcessor(CorbaAssertMixin, SimpleTestCase):
             call.get_registrar_by_handle_and_payment('REG-BBT', self.payment),
             call.import_payment_by_registrar_handle(self.payment, 'REG-BBT'),
         ])
+
+    def test_get_client_choices(self, corba_mock):
+        """Test get_client_choices method."""
+        ACCOUNTING.get_registrar_references.return_value = (
+            Accounting.RegistrarReference(handle='SW', name='Star Wars'),
+            Accounting.RegistrarReference(handle='ST', name='Star Trek'),
+        )
+        self.assertEqual(self.processor.get_client_choices(), {
+            'SW': 'Star Wars (SW)',
+            'ST': 'Star Trek (ST)',
+        })
