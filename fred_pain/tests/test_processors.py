@@ -84,22 +84,6 @@ class TestFredPaymentProcessor(CorbaAssertMixin, SimpleTestCase):
             call.import_payment(self.payment),
         ])
 
-    # def test_process_payments_credit_already_processed(self, corba_mock):
-    #     """Test process_payments with CREDIT_ALREADY_PROCESSED exception."""
-    #     ACCOUNTING.get_registrar_by_payment.return_value = (get_registrar(handle='REG-BBT'), 'CZ')
-    #     ACCOUNTING.import_payment.return_value = Accounting.Credit(value='42')
-    #     ACCOUNTING.increase_zone_credit_of_registrar.side_effect = Accounting.CREDIT_ALREADY_PROCESSED
-
-    #     self.assertEqual(
-    #         list(self.processor.process_payments([self.payment])),
-    #         [ProcessPaymentResult(True, 'Registrar payment')]
-    #     )
-    #     self.assertCorbaCallsEqual(corba_mock.mock_calls, [
-    #         call.get_registrar_by_payment(self.payment),
-    #         call.import_payment(self.payment),
-    #         call.increase_zone_credit_of_registrar('UUID', 'REG-BBT', 'CZ', '42')
-    #     ])
-
     def test_process_payments_registrar_not_found(self, corba_mock):
         """Test process_payments with REGISTRAR_NOT_FOUND exception."""
         ACCOUNTING.get_registrar_by_payment.side_effect = Accounting.REGISTRAR_NOT_FOUND
@@ -124,5 +108,4 @@ class TestFredPaymentProcessor(CorbaAssertMixin, SimpleTestCase):
         self.assertCorbaCallsEqual(corba_mock.mock_calls, [
             call.get_registrar_by_handle_and_payment('REG-BBT', self.payment),
             call.import_payment_by_registrar_handle(self.payment, 'REG-BBT'),
-            # call.increase_zone_credit_of_registrar('UUID', 'REG-BBT', 'CZ', '42')
         ])
