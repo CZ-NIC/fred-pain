@@ -5,7 +5,7 @@ from uuid import UUID
 
 from django.test import TestCase, override_settings
 from django_pain.constants import InvoiceType
-from django_pain.models import BankAccount, BankPayment, Invoice
+from django_pain.models import BankAccount, BankPayment, Client, Invoice
 from django_pain.processors import ProcessPaymentResult
 from djmoney.money import Money
 from fred_idl.Registry import Accounting
@@ -71,6 +71,9 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
             list(self.processor.process_payments([self.payment])),
             [ProcessPaymentResult(True, 'Registrar payment')]
         )
+        self.assertQuerysetEqual(Client.objects.all().values_list('handle', 'remote_id', 'payment'), [
+            ('REG-BBT', 1, self.payment.pk)
+        ], transform=tuple)
         self.assertCorbaCallsEqual(corba_mock.mock_calls, [
             call.get_registrar_by_payment(self.payment),
             call.import_payment(self.payment),
@@ -151,3 +154,9 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
         """Test get_invoice_url method."""
         self.assertEqual(self.processor.get_invoice_url(Invoice(remote_id=42)),
                          'http://example.com/invoice/detail/?id=42')
+
+    @override_settings(FRED_PAIN_DAPHNE_URL='http://example.com')
+    def test_get_client_url(self, corba_mock):
+        """Test get_client_url method."""
+        self.assertEqual(self.processor.get_client_url(Client(remote_id=42)),
+                         'http://example.com/registrar/detail/?id=42')

@@ -3,7 +3,7 @@ from typing import Iterable, Optional
 
 from django.utils.translation import gettext_lazy as _
 from django_pain.constants import InvoiceType
-from django_pain.models import BankPayment, Invoice
+from django_pain.models import BankPayment, Client, Invoice
 from django_pain.processors import AbstractPaymentProcessor, ProcessPaymentResult
 from fred_idl.Registry import Accounting
 
@@ -48,6 +48,9 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
             # payment uuid and throws this exception.
             return ProcessPaymentResult(result=True, objective=self.default_objective)
         else:
+            client = Client(handle=registrar.handle, remote_id=registrar.id, payment=payment)
+            client.save()
+
             for invoice in invoices:
                 try:
                     inv = Invoice.objects.get(number=invoice.number)
@@ -77,3 +80,8 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
     def get_invoice_url(invoice: Invoice) -> str:
         """Get invoice url in old Daphne."""
         return '%s/invoice/detail/?id=%s' % (SETTINGS.daphne_url, invoice.remote_id)
+
+    @staticmethod
+    def get_client_url(client: Client) -> str:
+        """Get registrar url in old Daphne."""
+        return '%s/registrar/detail/?id=%s' % (SETTINGS.daphne_url, client.remote_id)
