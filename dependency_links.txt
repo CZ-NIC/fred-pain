@@ -1,2 +1,2 @@
 git+ssh://git@gitlab.office.nic.cz/fred/utils/pyfco.git#egg=fred-pyfco-0
-git+ssh://git@gitlab.office.nic.cz/django-apps/django-pain.git#egg=django-pain-0
+git+ssh://git@gitlab.office.nic.cz/django-apps/django-pain.git#egg=django-pain-1
