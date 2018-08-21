@@ -75,7 +75,7 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
         """
         registrars = {}
         for reg in ACCOUNTING.get_registrar_references():
-            registrars[reg.handle] = '%s (%s)' % (reg.name, reg.handle)
+            registrars[reg.handle] = '{} ({})'.format(reg.name, reg.handle)
         return registrars
 
 
@@ -92,9 +92,9 @@ class FredDaphnePaymentProcessor(FredPaymentProcessor):
     @staticmethod
     def get_invoice_url(invoice: Invoice) -> str:
         """Get invoice url in Daphne."""
-        return '%s/invoice/detail/?id=%s' % (SETTINGS.daphne_url, invoice.remote_id)
+        return '{}/invoice/detail/?id={}'.format(SETTINGS.daphne_url, invoice.remote_id)
 
     @staticmethod
     def get_client_url(client: Client) -> str:
         """Get registrar url in Daphne."""
-        return '%s/registrar/detail/?id=%s' % (SETTINGS.daphne_url, client.remote_id)
+        return '{}/registrar/detail/?id={}'.format(SETTINGS.daphne_url, client.remote_id)
