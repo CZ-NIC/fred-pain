@@ -7,6 +7,7 @@ class FredPainSettings(appsettings.AppSettings):
 
     corba_netloc = appsettings.StringSetting(default='localhost')
     corba_context = appsettings.StringSetting(default='fred')
+    daphne_url = appsettings.StringSetting()
 
     class Meta:
         """Meta class."""

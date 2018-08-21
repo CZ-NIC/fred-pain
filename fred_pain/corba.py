@@ -25,7 +25,7 @@ class AccountingCorbaRecoder(CorbaRecoder):
         """Encode bank payment to struct."""
         return Accounting.PaymentData(
             account_payment_ident=payment.identifier,
-            uuid=payment.uuid,
+            uuid=payment.uuid.hex,
             account_number=payment.account.account_number,
             counter_account_number=payment.counter_account_number,
             counter_account_name=payment.counter_account_name,
