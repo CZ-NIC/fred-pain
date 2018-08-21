@@ -14,4 +14,4 @@ DATABASES = {
     'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}
 }
 
-PAIN_PROCESSORS = []  # type: list
+PAIN_PROCESSORS = {}  # type: dict
