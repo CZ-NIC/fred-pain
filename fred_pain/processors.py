@@ -53,16 +53,9 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
             client.save()
 
             for invoice in invoices:
-                try:
-                    inv = Invoice.objects.get(number=invoice.number)
-                except Invoice.DoesNotExist:
-                    inv = Invoice(number=invoice.number, remote_id=invoice.id,
-                                  invoice_type=INVOICE_TYPE_MAP[invoice.type])
-                    inv.save()
-                    inv.payments.add(payment)
-
-                else:
-                    inv.payments.add(payment)
+                inv, created = Invoice.objects.get_or_create(number=invoice.number, defaults={
+                    'remote_id': invoice.id, 'invoice_type': INVOICE_TYPE_MAP[invoice.type]})
+                inv.payments.add(payment)
 
             return ProcessPaymentResult(result=True, objective=self.default_objective)
 
