@@ -15,5 +15,3 @@ DATABASES = {
 }
 
 PAIN_PROCESSORS = []  # type: list
-
-FRED_PAIN_DAPHNE_URL = ''

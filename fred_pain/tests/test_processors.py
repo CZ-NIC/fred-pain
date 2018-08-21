@@ -3,6 +3,7 @@ from datetime import date
 from unittest.mock import call, patch
 from uuid import UUID
 
+from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
 from django_pain.constants import InvoiceType
 from django_pain.models import BankAccount, BankPayment, Client, Invoice
@@ -12,7 +13,7 @@ from fred_idl.Registry import Accounting
 from pyfco.utils import CorbaAssertMixin
 
 from fred_pain.corba import ACCOUNTING
-from fred_pain.processors import FredPaymentProcessor
+from fred_pain.processors import FredDaphnePaymentProcessor, FredPaymentProcessor
 
 
 def get_address(**kwargs):
@@ -149,14 +150,36 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
             'ST': 'Star Trek (ST)',
         })
 
-    @override_settings(FRED_PAIN_DAPHNE_URL='http://example.com')
+
+@override_settings(FRED_PAIN_DAPHNE_URL='http://example.com')
+@patch('fred_pain.corba.ACCOUNTING.client')
+class TestFredDaphnePaymentProcessor(CorbaAssertMixin, TestCase):
+    """Test FredDaphnePaymentProcessor."""
+
+    def setUp(self):
+        """Set up common variables."""
+        self.processor = FredDaphnePaymentProcessor()
+        self.account = BankAccount(account_number='123', currency='USD')
+        self.account.save()
+        self.payment = BankPayment(identifier='PAYMENT', uuid=UUID('00000000-0000-0000-0000-000000000000'),
+                                   account=self.account, amount=Money('999.00', 'USD'),
+                                   transaction_date=date(2018, 1, 1))
+        self.payment.save()
+
     def test_get_invoice_url(self, corba_mock):
         """Test get_invoice_url method."""
         self.assertEqual(self.processor.get_invoice_url(Invoice(remote_id=42)),
                          'http://example.com/invoice/detail/?id=42')
 
-    @override_settings(FRED_PAIN_DAPHNE_URL='http://example.com')
     def test_get_client_url(self, corba_mock):
         """Test get_client_url method."""
         self.assertEqual(self.processor.get_client_url(Client(remote_id=42)),
                          'http://example.com/registrar/detail/?id=42')
+
+    def test_not_configured(self, corba_mock):
+        """Test not configured properly."""
+        with override_settings(FRED_PAIN_DAPHNE_URL=''):
+            with self.assertRaisesRegex(
+                    ImproperlyConfigured,
+                    'Setting FRED_PAIN_DAPHNE_URL is mandatory when using FredDaphnePaymentProcessor'):
+                FredDaphnePaymentProcessor()

@@ -1,6 +1,7 @@
 """FRED payment processors."""
 from typing import Iterable, Optional
 
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 from django_pain.constants import InvoiceType
 from django_pain.models import BankPayment, Client, Invoice
@@ -10,7 +11,7 @@ from fred_idl.Registry import Accounting
 from fred_pain.corba import ACCOUNTING
 from fred_pain.settings import SETTINGS
 
-INVOICE_TYPES = {
+INVOICE_TYPE_MAP = {
     Accounting.InvoiceType.advance: InvoiceType.ADVANCE,
     Accounting.InvoiceType.account: InvoiceType.ACCOUNT,
 }
@@ -55,7 +56,8 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
                 try:
                     inv = Invoice.objects.get(number=invoice.number)
                 except Invoice.DoesNotExist:
-                    inv = Invoice(number=invoice.number, remote_id=invoice.id, invoice_type=INVOICE_TYPES[invoice.type])
+                    inv = Invoice(number=invoice.number, remote_id=invoice.id,
+                                  invoice_type=INVOICE_TYPE_MAP[invoice.type])
                     inv.save()
                     inv.payments.add(payment)
 
@@ -76,12 +78,23 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
             registrars[reg.handle] = '%s (%s)' % (reg.name, reg.handle)
         return registrars
 
+
+class FredDaphnePaymentProcessor(FredPaymentProcessor):
+    """FRED payment processor with links to Daphne webadmin tool."""
+
+    def __init__(self, *args, **kwargs):
+        """Check mandatory settings."""
+        if not SETTINGS.daphne_url:
+            raise ImproperlyConfigured('Setting FRED_PAIN_DAPHNE_URL is mandatory '
+                                       'when using FredDaphnePaymentProcessor')
+        super().__init__(*args, **kwargs)
+
     @staticmethod
     def get_invoice_url(invoice: Invoice) -> str:
-        """Get invoice url in old Daphne."""
+        """Get invoice url in Daphne."""
         return '%s/invoice/detail/?id=%s' % (SETTINGS.daphne_url, invoice.remote_id)
 
     @staticmethod
     def get_client_url(client: Client) -> str:
-        """Get registrar url in old Daphne."""
+        """Get registrar url in Daphne."""
         return '%s/registrar/detail/?id=%s' % (SETTINGS.daphne_url, client.remote_id)
