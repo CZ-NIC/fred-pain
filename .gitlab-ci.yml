@@ -23,7 +23,7 @@ variables:
         - (cd idl && git checkout $IDL_BRANCH && omniidl -bpython -Wbmodules=fred_idl -Wbstubs=fred_idl._stubs idl/*.idl)
         - pip3 install tox
         - pip3 install git+https://github.com/balabit/tox-debian-plugin.git
-        - pip3 install git+https://gitlab.office.nic.cz/tomas.pazderka/tox-version-plugin.git@python3
+        - pip3 install git+https://gitlab.office.nic.cz/tomas.pazderka/tox-version-plugin.git
 
 .test: &test
     <<: *requires-python
