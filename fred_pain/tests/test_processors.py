@@ -70,7 +70,7 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
 
         self.assertEqual(
             list(self.processor.process_payments([self.payment])),
-            [ProcessPaymentResult(True, 'Registrar payment')]
+            [ProcessPaymentResult(True)]
         )
         self.assertQuerysetEqual(Client.objects.all().values_list('handle', 'remote_id', 'payment'), [
             ('REG-BBT', 1, self.payment.pk)
@@ -87,7 +87,7 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
 
         self.assertEqual(
             list(self.processor.process_payments([self.payment])),
-            [ProcessPaymentResult(True, 'Registrar payment')]
+            [ProcessPaymentResult(True)]
         )
         self.assertCorbaCallsEqual(corba_mock.mock_calls, [
             call.get_registrar_by_payment(self.payment),
@@ -100,7 +100,7 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
 
         self.assertEqual(
             list(self.processor.process_payments([self.payment])),
-            [ProcessPaymentResult(False, 'Registrar payment')]
+            [ProcessPaymentResult(False)]
         )
         self.assertCorbaCallsEqual(corba_mock.mock_calls, [
             call.get_registrar_by_payment(self.payment),
@@ -116,7 +116,7 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
 
         self.assertEqual(
             self.processor.assign_payment(self.payment, 'REG-BBT'),
-            ProcessPaymentResult(True, 'Registrar payment')
+            ProcessPaymentResult(True)
         )
         self.assertQuerysetEqual(Invoice.objects.all().values_list('number', 'remote_id', 'invoice_type', 'payments'), [
             ('INV42', 42, InvoiceType.ADVANCE, self.payment.pk)
