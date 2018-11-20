@@ -1,4 +1,5 @@
 """FRED payment processors."""
+import logging
 from typing import Iterable, Optional
 
 from django.core.exceptions import ImproperlyConfigured
@@ -16,6 +17,8 @@ INVOICE_TYPE_MAP = {
     Accounting.InvoiceType.account: InvoiceType.ACCOUNT,
 }
 
+LOGGER = logging.getLogger(__name__)
+
 
 class FredPaymentProcessor(AbstractPaymentProcessor):
     """FRED payment processor."""
@@ -29,6 +32,7 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
 
     def assign_payment(self, payment: BankPayment, client_id: str) -> ProcessPaymentResult:
         """Force assign payment to FRED."""
+        LOGGER.debug('Manually assigning payment %s to registrar %s.', str(payment.uuid), client_id)
         return self.process_payment(payment, client_id)
 
     def process_payment(self, payment: BankPayment, client_id: Optional[str] = None):
@@ -42,13 +46,16 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
                 invoices, credit = ACCOUNTING.import_payment_by_registrar_handle(payment, registrar.handle)
 
         except (Accounting.INTERNAL_SERVER_ERROR, Accounting.REGISTRAR_NOT_FOUND, Accounting.INVALID_PAYMENT_DATA):
+            LOGGER.debug('Payment %s rejected.', str(payment.uuid))
             return ProcessPaymentResult(result=False)
         except Accounting.CREDIT_ALREADY_PROCESSED:
             # This can happen if connection error occurs after increasing credit in backend.
             # When we try to send the payment again, in another processing, backend recognizes
             # payment uuid and throws this exception.
+            LOGGER.debug('Payment %s was already processed.', str(payment.uuid))
             return ProcessPaymentResult(result=True)
         else:
+            LOGGER.debug('Payment %s accepted. %s invoices attached.', str(payment.uuid), len(invoices))
             client = Client(handle=registrar.handle, remote_id=registrar.id, payment=payment)
             client.save()
 
