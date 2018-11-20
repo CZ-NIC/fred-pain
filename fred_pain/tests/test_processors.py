@@ -11,6 +11,7 @@ from django_pain.processors import ProcessPaymentResult
 from djmoney.money import Money
 from fred_idl.Registry import Accounting
 from pyfco.utils import CorbaAssertMixin
+from testfixtures import LogCapture
 
 from fred_pain.corba import ACCOUNTING
 from fred_pain.processors import FredDaphnePaymentProcessor, FredPaymentProcessor
@@ -62,6 +63,10 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
                                    account=self.account, amount=Money('999.00', 'USD'),
                                    transaction_date=date(2018, 1, 1))
         self.payment.save()
+        self.log_handler = LogCapture('fred_pain.processors', propagate=False)
+
+    def tearDown(self):
+        self.log_handler.uninstall()
 
     def test_process_payments_success(self, corba_mock):
         """Test process_payments with successful credit increase."""
@@ -79,6 +84,10 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
             call.get_registrar_by_payment(self.payment),
             call.import_payment(self.payment),
         ])
+        self.log_handler.check(
+            ('fred_pain.processors', 'DEBUG',
+             'Payment 00000000-0000-0000-0000-000000000000 accepted. 0 invoices attached.'),
+        )
 
     def test_process_payments_credit_already_processed(self, corba_mock):
         """Test process_payments with CREDIT_ALREADY_PROCESSED exception."""
@@ -93,6 +102,9 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
             call.get_registrar_by_payment(self.payment),
             call.import_payment(self.payment),
         ])
+        self.log_handler.check(
+            ('fred_pain.processors', 'DEBUG', 'Payment 00000000-0000-0000-0000-000000000000 was already processed.'),
+        )
 
     def test_process_payments_registrar_not_found(self, corba_mock):
         """Test process_payments with REGISTRAR_NOT_FOUND exception."""
@@ -105,6 +117,9 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
         self.assertCorbaCallsEqual(corba_mock.mock_calls, [
             call.get_registrar_by_payment(self.payment),
         ])
+        self.log_handler.check(
+            ('fred_pain.processors', 'DEBUG', 'Payment 00000000-0000-0000-0000-000000000000 rejected.'),
+        )
 
     def test_assign_payment(self, corba_mock):
         """Test assign_payment method."""
@@ -125,6 +140,12 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
             call.get_registrar_by_handle_and_payment('REG-BBT', self.payment),
             call.import_payment_by_registrar_handle(self.payment, 'REG-BBT'),
         ])
+        self.log_handler.check(
+            ('fred_pain.processors', 'DEBUG',
+             'Manually assigning payment 00000000-0000-0000-0000-000000000000 to registrar REG-BBT.'),
+            ('fred_pain.processors', 'DEBUG',
+             'Payment 00000000-0000-0000-0000-000000000000 accepted. 1 invoices attached.'),
+        )
 
     def test_assign_payment_invoice_exists(self, corba_mock):
         """Test assign_payment method when invoice already exists."""

@@ -33,7 +33,7 @@ def readme():
 SETUP_REQUIRES = ['Babel >=2.3']
 INSTALL_REQUIRES = open('requirements.txt').read().splitlines()
 EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint'],
-                  'test': ['Django>=1.11', 'django-money']}
+                  'test': ['Django>=1.11', 'django-money', 'testfixtures']}
 
 setup(name='fred-pain',
       version=fred_pain.__version__,
