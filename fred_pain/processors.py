@@ -62,6 +62,13 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
             for invoice in invoices:
                 inv, created = Invoice.objects.get_or_create(number=invoice.number, defaults={
                     'remote_id': invoice.id, 'invoice_type': INVOICE_TYPE_MAP[invoice.type]})
+                if not created:
+                    if inv.remote_id != invoice.id:
+                        LOGGER.error('Invoice number %s already exists with id=%s (received id=%s)',
+                                     invoice.number, inv.remote_id, invoice.id)
+                    if inv.invoice_type == InvoiceType.ADVANCE:
+                        LOGGER.error('Advance invoice number %s is already associated with different payment.',
+                                     invoice.number)
                 inv.payments.add(payment)
 
             return ProcessPaymentResult(result=True)
