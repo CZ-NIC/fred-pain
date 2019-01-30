@@ -160,6 +160,45 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
 
         self.assertQuerysetEqual(invoice.payments.all().values_list('pk'), [(self.payment.pk,)], transform=tuple)
 
+    def test_invoice_with_different_remote_id_exists(self, corba_mock):
+        """Test assign_payment method when invoice with the same number but different remote_id exists."""
+        ACCOUNTING.get_registrar_by_handle_and_payment.return_value = (get_registrar(handle='REG-BBT'), 'CZ')
+        ACCOUNTING.import_payment_by_registrar_handle.return_value = (
+            [Accounting.InvoiceReference(id=42, number='INV42', type=Accounting.InvoiceType.account)],
+            Accounting.Credit(value='42')
+        )
+        invoice = Invoice(remote_id=43, number='INV42', invoice_type=InvoiceType.ACCOUNT)
+        invoice.save()
+        self.processor.assign_payment(self.payment, 'REG-BBT'),
+
+        self.log_handler.check(
+            ('fred_pain.processors', 'DEBUG',
+             'Manually assigning payment 00000000-0000-0000-0000-000000000000 to registrar REG-BBT.'),
+            ('fred_pain.processors', 'DEBUG',
+             'Payment 00000000-0000-0000-0000-000000000000 accepted. 1 invoices attached.'),
+            ('fred_pain.processors', 'ERROR', 'Invoice number INV42 already exists with id=43 (received id=42)'),
+        )
+
+    def test_advance_invoice_already_exists(self, corba_mock):
+        """Test assign_payment method when advance invoice already exists."""
+        ACCOUNTING.get_registrar_by_handle_and_payment.return_value = (get_registrar(handle='REG-BBT'), 'CZ')
+        ACCOUNTING.import_payment_by_registrar_handle.return_value = (
+            [Accounting.InvoiceReference(id=42, number='INV42', type=Accounting.InvoiceType.advance)],
+            Accounting.Credit(value='42')
+        )
+        invoice = Invoice(remote_id=42, number='INV42', invoice_type=InvoiceType.ADVANCE)
+        invoice.save()
+        self.processor.assign_payment(self.payment, 'REG-BBT'),
+
+        self.log_handler.check(
+            ('fred_pain.processors', 'DEBUG',
+             'Manually assigning payment 00000000-0000-0000-0000-000000000000 to registrar REG-BBT.'),
+            ('fred_pain.processors', 'DEBUG',
+             'Payment 00000000-0000-0000-0000-000000000000 accepted. 1 invoices attached.'),
+            ('fred_pain.processors', 'ERROR',
+             'Advance invoice number INV42 is already associated with different payment.'),
+        )
+
     def test_get_client_choices(self, corba_mock):
         """Test get_client_choices method."""
         ACCOUNTING.get_registrar_references.return_value = (
