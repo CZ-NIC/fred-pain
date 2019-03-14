@@ -1,3 +1,7 @@
+stages:
+    - analysis
+    - test
+
 variables:
     IDL_DIR: "idl"
     VIRTUALENV_NO_DOWNLOAD: "1"
@@ -30,6 +34,7 @@ variables:
     <<: *requires-python
     <<: *python3-xenial
     <<: *install-dependencies
+    stage: test
     script:
         - tox
 
@@ -38,6 +43,7 @@ variables:
 depcheck:
     <<: *requires-python
     <<: *python3-xenial
+    stage: analysis
     only:
         - schedules
     before_script:
@@ -49,6 +55,7 @@ depcheck:
 
 licensing:
     <<: *python3-xenial
+    stage: analysis
     before_script:
         - git clone git@gitlab.office.nic.cz:internal-tools/license-check.git --single-branch --depth 1
     script:
