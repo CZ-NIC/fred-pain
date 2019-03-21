@@ -14,3 +14,6 @@ msgstr ""
 
 msgid "Registrar payment"
 msgstr "Platba registrátora"
+
+msgid "Tax date cannot be older than 15 days"
+msgstr "DUZP nesmí být starší, než 15 dní"
