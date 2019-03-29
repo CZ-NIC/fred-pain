@@ -18,13 +18,14 @@
 
 """FRED payment processors."""
 import logging
+from datetime import date
 from typing import Iterable, Optional
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
-from django_pain.constants import InvoiceType
+from django_pain.constants import InvoiceType, PaymentProcessingError
 from django_pain.models import BankPayment, Client, Invoice
-from django_pain.processors import AbstractPaymentProcessor, ProcessPaymentResult
+from django_pain.processors import AbstractPaymentProcessor, InvalidTaxDateError, ProcessPaymentResult
 from fred_idl.Registry import Accounting
 
 from fred_pain.corba import ACCOUNTING
@@ -42,18 +43,19 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
     """FRED payment processor."""
 
     default_objective = _('Registrar payment')
+    manual_tax_date = True
 
     def process_payments(self, payments: Iterable[BankPayment]) -> Iterable[ProcessPaymentResult]:
         """Process payment through FRED."""
         for payment in payments:
             yield self.process_payment(payment)
 
-    def assign_payment(self, payment: BankPayment, client_id: str) -> ProcessPaymentResult:
+    def assign_payment(self, payment: BankPayment, client_id: str, tax_date: date = None) -> ProcessPaymentResult:
         """Force assign payment to FRED."""
         LOGGER.debug('Manually assigning payment %s to registrar %s.', str(payment.uuid), client_id)
-        return self.process_payment(payment, client_id)
+        return self.process_payment(payment, client_id, tax_date)
 
-    def process_payment(self, payment: BankPayment, client_id: Optional[str] = None):
+    def process_payment(self, payment: BankPayment, client_id: Optional[str] = None, tax_date: date = None):
         """Process one payment."""
         try:
             if client_id is None:
@@ -61,11 +63,19 @@ class FredPaymentProcessor(AbstractPaymentProcessor):
                 invoices, credit = ACCOUNTING.import_payment(payment)
             else:
                 registrar, zone = ACCOUNTING.get_registrar_by_handle_and_payment(client_id, payment)
-                invoices, credit = ACCOUNTING.import_payment_by_registrar_handle(payment, registrar.handle)
+                invoices, credit = ACCOUNTING.import_payment_by_registrar_handle(payment, registrar.handle, tax_date)
 
-        except (Accounting.INTERNAL_SERVER_ERROR, Accounting.REGISTRAR_NOT_FOUND, Accounting.INVALID_PAYMENT_DATA):
+        except (Accounting.INTERNAL_SERVER_ERROR, Accounting.REGISTRAR_NOT_FOUND, Accounting.INVALID_PAYMENT_DATA,
+                Accounting.INVALID_TAX_DATE_FORMAT):
             LOGGER.debug('Payment %s rejected.', str(payment.uuid))
             return ProcessPaymentResult(result=False)
+        except (Accounting.PAYMENT_TOO_OLD):
+            LOGGER.debug('Payment %s rejected.', str(payment.uuid))
+            return ProcessPaymentResult(result=False, error=PaymentProcessingError.TOO_OLD)
+        except (Accounting.INVALID_TAX_DATE_VALUE):
+            # When munally assigned tax date is invalid, raise exception
+            LOGGER.debug('Payment %s rejected (invalid tax date value).', str(payment.uuid))
+            raise InvalidTaxDateError(_('Tax date cannot be older than 15 days'))
         except Accounting.CREDIT_ALREADY_PROCESSED:
             # This can happen if connection error occurs after increasing credit in backend.
             # When we try to send the payment again, in another processing, backend recognizes

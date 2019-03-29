@@ -23,9 +23,9 @@ from uuid import UUID
 
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
-from django_pain.constants import InvoiceType
+from django_pain.constants import InvoiceType, PaymentProcessingError
 from django_pain.models import BankAccount, BankPayment, Client, Invoice
-from django_pain.processors import ProcessPaymentResult
+from django_pain.processors import InvalidTaxDateError, ProcessPaymentResult
 from djmoney.money import Money
 from fred_idl.Registry import Accounting
 from pyfco.utils import CorbaAssertMixin
@@ -139,6 +139,21 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
             ('fred_pain.processors', 'DEBUG', 'Payment 00000000-0000-0000-0000-000000000000 rejected.'),
         )
 
+    def test_process_payments_too_old(self, corba_mock):
+        """Test process_payments with PAYMENT_TOO_OLD exception."""
+        ACCOUNTING.get_registrar_by_payment.side_effect = Accounting.PAYMENT_TOO_OLD
+
+        self.assertEqual(
+            list(self.processor.process_payments([self.payment])),
+            [ProcessPaymentResult(False, PaymentProcessingError.TOO_OLD)]
+        )
+        self.assertCorbaCallsEqual(corba_mock.mock_calls, [
+            call.get_registrar_by_payment(self.payment),
+        ])
+        self.log_handler.check(
+            ('fred_pain.processors', 'DEBUG', 'Payment 00000000-0000-0000-0000-000000000000 rejected.'),
+        )
+
     def test_assign_payment(self, corba_mock):
         """Test assign_payment method."""
         ACCOUNTING.get_registrar_by_handle_and_payment.return_value = (get_registrar(handle='REG-BBT'), 'CZ')
@@ -148,7 +163,7 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
         )
 
         self.assertEqual(
-            self.processor.assign_payment(self.payment, 'REG-BBT'),
+            self.processor.assign_payment(self.payment, 'REG-BBT', date(2019, 1, 1)),
             ProcessPaymentResult(True)
         )
         self.assertQuerysetEqual(Invoice.objects.all().values_list('number', 'remote_id', 'invoice_type', 'payments'), [
@@ -156,7 +171,7 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
         ], transform=tuple)
         self.assertCorbaCallsEqual(corba_mock.mock_calls, [
             call.get_registrar_by_handle_and_payment('REG-BBT', self.payment),
-            call.import_payment_by_registrar_handle(self.payment, 'REG-BBT'),
+            call.import_payment_by_registrar_handle(self.payment, 'REG-BBT', date(2019, 1, 1)),
         ])
         self.log_handler.check(
             ('fred_pain.processors', 'DEBUG',
@@ -174,9 +189,24 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
         )
         invoice = Invoice(remote_id=42, number='INV42', invoice_type=InvoiceType.ADVANCE)
         invoice.save()
-        self.processor.assign_payment(self.payment, 'REG-BBT'),
+        self.processor.assign_payment(self.payment, 'REG-BBT')
 
         self.assertQuerysetEqual(invoice.payments.all().values_list('pk'), [(self.payment.pk,)], transform=tuple)
+
+    def test_assign_payment_invalid_tax_date(self, corba_mock):
+        """Test assign_payment method when invalid tax date value."""
+        ACCOUNTING.get_registrar_by_handle_and_payment.return_value = (get_registrar(handle='REG-BBT'), 'CZ')
+        ACCOUNTING.import_payment_by_registrar_handle.side_effect = Accounting.INVALID_TAX_DATE_VALUE
+
+        with self.assertRaises(InvalidTaxDateError):
+            self.processor.assign_payment(self.payment, 'REG-BBT')
+
+        self.log_handler.check(
+            ('fred_pain.processors', 'DEBUG',
+             'Manually assigning payment 00000000-0000-0000-0000-000000000000 to registrar REG-BBT.'),
+            ('fred_pain.processors', 'DEBUG',
+             'Payment 00000000-0000-0000-0000-000000000000 rejected (invalid tax date value).'),
+        )
 
     def test_invoice_with_different_remote_id_exists(self, corba_mock):
         """Test assign_payment method when invoice with the same number but different remote_id exists."""
@@ -187,7 +217,7 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
         )
         invoice = Invoice(remote_id=43, number='INV42', invoice_type=InvoiceType.ACCOUNT)
         invoice.save()
-        self.processor.assign_payment(self.payment, 'REG-BBT'),
+        self.processor.assign_payment(self.payment, 'REG-BBT')
 
         self.log_handler.check(
             ('fred_pain.processors', 'DEBUG',
@@ -206,7 +236,7 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
         )
         invoice = Invoice(remote_id=42, number='INV42', invoice_type=InvoiceType.ADVANCE)
         invoice.save()
-        self.processor.assign_payment(self.payment, 'REG-BBT'),
+        self.processor.assign_payment(self.payment, 'REG-BBT')
 
         self.log_handler.check(
             ('fred_pain.processors', 'DEBUG',
