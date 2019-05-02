@@ -17,6 +17,8 @@
 # along with FRED.  If not, see <https://www.gnu.org/licenses/>.
 
 """FRED CORBA interface."""
+from datetime import date
+
 from django.utils.functional import SimpleLazyObject
 from django_pain.models import BankPayment
 from fred_idl.Registry import Accounting, IsoDate, IsoDateTime
@@ -33,6 +35,7 @@ class AccountingCorbaRecoder(CorbaRecoder):
         """Add specific recode functions."""
         super().__init__(coding)
         self.add_recode_function(BankPayment, self._identity, self._encode_bankpayment)
+        self.add_recode_function(date, self._identity, encode_iso_date)
 
         self.add_recode_function(IsoDate, decode_iso_date, self._identity)
         self.add_recode_function(IsoDateTime, decode_iso_datetime, self._identity)
