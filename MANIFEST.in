@@ -2,5 +2,4 @@ include LICENSE
 include COPYING
 include README.rst
 include requirements.txt
-include dependency_links.txt
 recursive-include fred_pain/locale *
