@@ -28,10 +28,19 @@ image:ubuntu:xenial:
         IMAGE_NAME: ubuntu:xenial
         IMAGE_TAG: $CI_REGISTRY_IMAGE/$IMAGE_NAME
 
+image:ubuntu:bionic:
+    <<: *image
+    variables:
+        IMAGE_NAME: ubuntu:bionic
+        IMAGE_TAG: $CI_REGISTRY_IMAGE/$IMAGE_NAME
+
 ########################################################################################################################
 # Basic declarations
 .ubuntu-xenial: &ubuntu-xenial
     image: "$CI_REGISTRY/$CI_PROJECT_PATH/ubuntu:xenial"
+
+.ubuntu-bionic: &ubuntu-bionic
+    image: "$CI_REGISTRY/$CI_PROJECT_PATH/ubuntu:bionic"
 
 .install-dependencies: &install-dependencies
     before_script:
@@ -77,3 +86,7 @@ depcheck:
 test:xenial:
     <<: *test
     <<: *ubuntu-xenial
+
+test:bionic:
+    <<: *test
+    <<: *ubuntu-bionic
