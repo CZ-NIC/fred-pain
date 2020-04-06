@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-# Copyright (C) 2018-2019  CZ.NIC, z. s. p. o.
+# Copyright (C) 2018-2020  CZ.NIC, z. s. p. o.
 #
 # This file is part of FRED.
 #
@@ -77,4 +77,5 @@ setup(name='fred-pain',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
       ])
