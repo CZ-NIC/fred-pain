@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019  CZ.NIC, z. s. p. o.
+# Copyright (C) 2018-2020  CZ.NIC, z. s. p. o.
 #
 # This file is part of FRED.
 #
@@ -79,6 +79,7 @@ class TestFredPaymentProcessor(CorbaAssertMixin, TestCase):
         self.account.save()
         self.payment = BankPayment(identifier='PAYMENT', uuid=UUID('00000000-0000-0000-0000-000000000000'),
                                    account=self.account, amount=Money('999.00', 'USD'),
+                                   counter_account_number='098765/4321',
                                    transaction_date=date(2018, 1, 1))
         self.payment.save()
         self.log_handler = LogCapture('fred_pain.processors', propagate=False)
@@ -271,6 +272,7 @@ class TestFredDaphnePaymentProcessor(CorbaAssertMixin, TestCase):
         self.account.save()
         self.payment = BankPayment(identifier='PAYMENT', uuid=UUID('00000000-0000-0000-0000-000000000000'),
                                    account=self.account, amount=Money('999.00', 'USD'),
+                                   counter_account_number='098765/4321',
                                    transaction_date=date(2018, 1, 1))
         self.payment.save()
 
