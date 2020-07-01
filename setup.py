@@ -54,7 +54,7 @@ EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint']
                   'test': ['Django>=2.0', 'django-money', 'testfixtures']}
 
 setup(name='fred-pain',
-      version=fred_pain.__version__,
+      version='1.3.0-rc1',
       description='PAIN interface for FRED',
       long_description=readme(),
       url='https://fred.nic.cz',
