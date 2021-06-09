@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-# Copyright (C) 2018-2020  CZ.NIC, z. s. p. o.
+# Copyright (C) 2018-2021  CZ.NIC, z. s. p. o.
 #
 # This file is part of FRED.
 #
@@ -50,8 +50,10 @@ def readme():
 
 SETUP_REQUIRES = ['Babel >=2.3']
 INSTALL_REQUIRES = open('requirements.txt').read().splitlines()
+# Use --install-types for type stubs when available.
 EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint'],
-                  'test': ['Django>=2.0', 'django-money', 'testfixtures']}
+                  'test': ['Django>=2.0', 'django-money', 'testfixtures'],
+                  'types': ['types-pytz']}
 
 setup(name='fred-pain',
       version='1.3.0',
