@@ -1,5 +1,5 @@
-django-pain @ git+ssh://git@gitlab.office.nic.cz/django-apps/django-pain.git
-fred-pyfco @ git+ssh://git@gitlab.office.nic.cz/fred/utils/pyfco.git
+django-pain>=2.1.1
+fred-pyfco~=1.16.1
 django-app-settings
 fred-idl~=2.36.1
 omniorb~=4.2.3
